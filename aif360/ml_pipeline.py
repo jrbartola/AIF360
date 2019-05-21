@@ -7,7 +7,14 @@ from algorithms.postprocessing import CalibratedEqOddsPostprocessing
 class MLPipeline(object):
 
     """
-    Defines a machine-learning pipeline for evaluating fairness in predictors.
+    Defines a machine-learning pipeline for evaluating fairness in predictors. For usage, see example at the bottom of the file.
+
+    Args:
+        model (sklearn.model): An sklearn predictor
+        privileged (list[dict[str, float]]): A list of dictionaries with keys representing privileged attribute + value pairs
+        unprivileged (list[dict[str, float]]): A list of dictionaries with keys representing unprivileged attribute + value pairs
+        preprocessor (aif360.algorithms.preprocessing): An instance of an AIF360 preprocessing algorithm
+        postprocessor (aif360.algorithms.postprocessing): An instance of an AIF360 postprocessing algorithm
     """
 
     def __init__(self, model, privileged=[], unprivileged=[], preprocessor=None, postprocessor=None):
@@ -16,6 +23,7 @@ class MLPipeline(object):
         self.unprivileged = unprivileged
         self.preprocessor = preprocessor
         self.postprocessor = postprocessor
+
 
     def fit(self, dataset, n=0.3, threshold=0.5, feature_scaling=False, metrics=[]):
         """
@@ -93,12 +101,15 @@ if __name__ == '__main__':
     from datasets import AdultDataset
     from metrics import BinaryLabelDatasetMetric, ClassificationMetric
     from sklearn.linear_model import LogisticRegression
-
+    
+    # Example. Load the adult dataset, train with LogisticRegression and postprocess with EqOddsPostProcessing 
     dataset = AdultDataset()
-    privileged_groups = [{'race': 1}]
+    privileged_groups = [{'race': 1}] # white = 1
     unprivileged_groups = [{'race': 0}]
     postprocessor = CalibratedEqOddsPostprocessing(privileged_groups=privileged_groups, unprivileged_groups=unprivileged_groups)
-
+    
+    # Create our pipeline object, fit and evaluate our metrics.
+    # TODO: Perhaps the metric evaluation could be moved outside of the fit function.
     mlp = MLPipeline(LogisticRegression(), privileged_groups, unprivileged_groups, postprocessor=postprocessor)
     mlp.fit(dataset, metrics=[ClassificationMetric, BinaryLabelDatasetMetric])
 
